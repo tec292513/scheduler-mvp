@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scheduling MVP - Phase 1</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { margin-top: 40px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #f4f4f4; }
+    input, select, button { padding: 5px; margin: 3px; }
+    .overloaded { background-color: #ffcccc; }
+  </style>
+</head>
+<body>
+
+<h1>Scheduling MVP - Phase 1</h1>
+
+<h2>Resources</h2>
+<div>
+  <input id="resName" placeholder="Name">
+  <input id="resSkills" placeholder="Skills (comma separated)">
+  <input id="resMax" type="number" placeholder="Max Tasks">
+  <button onclick="addResource()">Add Resource</button>
+</div>
+<table id="resourcesTable">
+  <thead>
+    <tr><th>Name</th><th>Skills</th><th>Max Tasks</th><th>Current Load</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Tasks</h2>
+<div>
+  <input id="taskTitle" placeholder="Title">
+  <select id="taskPriority">
+    <option>High</option>
+    <option>Medium</option>
+    <option>Low</option>
+  </select>
+  <input id="taskSkills" placeholder="Required Skills (comma separated)">
+  <input id="taskHours" type="number" placeholder="Est. Hours">
+  <input id="taskDue" type="date">
+  <button onclick="addTask()">Add Task</button>
+</div>
+<table id="tasksTable">
+  <thead>
+    <tr><th>Title</th><th>Priority</th><th>Skills</th><th>Hours</th><th>Due</th><th>Assignee</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Actions</h2>
+<button onclick="optimizeSchedule()">Optimize Schedule</button>
+
+<script>
+let resources = [];
+let tasks = [];
+
+function addResource() {
+  const name = document.getElementById('resName').value.trim();
+  const skills = document.getElementById('resSkills').value.trim().toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+  const maxTasks = parseInt(document.getElementById('resMax').value, 10) || 0;
+  if (!name) return;
+  resources.push({ name, skills, maxTasks });
+  document.getElementById('resName').value = '';
+  document.getElementById('resSkills').value = '';
+  document.getElementById('resMax').value = '';
+  renderResources();
+}
+
+function addTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  const priority = document.getElementById('taskPriority').value;
+  const skills = document.getElementById('taskSkills').value.trim().toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+  const hours = parseFloat(document.getElementById('taskHours').value) || 0;
+  const due = document.getElementById('taskDue').value;
+  if (!title) return;
+  tasks.push({ title, priority, skills, hours, due, assignee: '' });
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskSkills').value = '';
+  document.getElementById('taskHours').value = '';
+  document.getElementById('taskDue').value = '';
+  renderTasks();
+}
+
+function renderResources() {
+  const tbody = document.querySelector('#resourcesTable tbody');
+  tbody.innerHTML = '';
+  resources.forEach(res => {
+    const load = tasks.filter(t => t.assignee === res.name).length;
+    const tr = document.createElement('tr');
+    if (load > res.maxTasks) tr.classList.add('overloaded');
+    tr.innerHTML = `<td>${res.name}</td><td>${res.skills.join(', ')}</td><td>${res.maxTasks}</td><td>${load}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTasks() {
+  const tbody = document.querySelector('#tasksTable tbody');
+  tbody.innerHTML = '';
+  tasks.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.title}</td><td>${t.priority}</td><td>${t.skills.join(', ')}</td><td>${t.hours}</td><td>${t.due}</td><td>${t.assignee}</td>`;
+    tbody.appendChild(tr);
+  });
+  renderResources();
+}
+
+function optimizeSchedule() {
+  // Reset assignments
+  tasks.forEach(t => t.assignee = '');
+  // Sort tasks by priority, due date, hours
+  const priorityRank = { High: 3, Medium: 2, Low: 1 };
+  tasks.sort((a, b) => {
+    if (priorityRank[b.priority] !== priorityRank[a.priority]) return priorityRank[b.priority] - priorityRank[a.priority];
+    if (a.due !== b.due) return new Date(a.due) - new Date(b.due);
+    return a.hours - b.hours;
+  });
+  // Assign tasks
+  tasks.forEach(task => {
+    const eligible = resources
+      .map(r => ({...r, load: tasks.filter(t => t.assignee === r.name).length }))
+      .filter(r => task.skills.every(s => r.skills.includes(s)) && r.load < r.maxTasks)
+      .sort((r1, r2) => r1.load - r2.load);
+    if (eligible.length > 0) {
+      task.assignee = eligible[0].name;
+    } else {
+      task.assignee = 'Unassigned';
+    }
+  });
+  renderTasks();
+}
+</script>
+
+</body>
+</html>
