@@ -1,138 +1,504 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Scheduling MVP - Phase 1</title>
+  <meta charset="utf-8" />
+  <title>QuantumExec Scheduler — Phase 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2 { margin-top: 40px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background: #f4f4f4; }
-    input, select, button { padding: 5px; margin: 3px; }
-    .overloaded { background-color: #ffcccc; }
+    :root{
+      --bg:#0b0f14;
+      --panel:#121820;
+      --panel-2:#0f141b;
+      --fg:#e6eef8;
+      --muted:#9fb3c8;
+      --line:#1f2a37;
+      --accent:#10b981;     /* green */
+      --accent-2:#22c55e;   /* alt green */
+      --danger:#ef4444;
+      --warn:#f59e0b;
+      --ok:#22c55e;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --radius:12px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--sans); background:linear-gradient(180deg,#0a0e13, #0b1118 30%, #0b0f14 100%); color:var(--fg);
+    }
+    .wrap{max-width:1080px; margin:32px auto; padding:0 16px;}
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      background:linear-gradient(180deg, #0f1620, #0d141c); padding:18px 20px; border:1px solid var(--line); border-radius: var(--radius); box-shadow:var(--shadow);
+    }
+    .brand{
+      display:flex; align-items:center; gap:14px;
+    }
+    .brand .logo{
+      width:36px; height:36px; border-radius:9px; background:
+        radial-gradient(120% 120% at 20% 20%, rgba(16,185,129,.45), transparent 55%),
+        radial-gradient(120% 120% at 80% 80%, rgba(34,197,94,.45), transparent 55%),
+        linear-gradient(135deg, #0b141d, #0a1017);
+      border:1px solid #1e2a36;
+      box-shadow: inset 0 0 20px rgba(16,185,129,.25), 0 4px 20px rgba(0,0,0,.35);
+    }
+    h1{font-size:18px; margin:0; letter-spacing:.2px}
+    .subtitle{color:var(--muted); font-size:13px; margin-top:2px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{
+      appearance:none; border:1px solid #233041; background:#101722; color:var(--fg);
+      padding:10px 14px; border-radius:10px; cursor:pointer; transition:.2s transform,.2s background,.2s border;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      font-weight:600; font-size:14px;
+    }
+    .btn:hover{ transform: translateY(-1px); background:#0f1926; }
+    .btn:active{ transform: translateY(0); }
+    .btn.primary{ background:linear-gradient(180deg,#10b981,#16a34a); border-color:#118a6a; color:white; }
+    .btn.primary:hover{ filter:brightness(1.05); }
+    .btn.ghost{ background:transparent; border-color:#243140; }
+    .btn.danger{ border-color:#3a1f22; background: #1a0f11; color:#ffb4b4; }
+
+    nav.tabs{
+      display:flex; gap:10px; margin:16px 0 22px;
+      background: #0f1620; border:1px solid var(--line); border-radius: var(--radius); padding:8px;
+    }
+    .tab{
+      padding:10px 14px; border-radius:10px; color:var(--muted); font-weight:600; cursor:pointer;
+      border:1px solid transparent;
+    }
+    .tab.active{ color:#0b1611; background: linear-gradient(180deg,#10b981,#22c55e); border-color:#11996b; }
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .panel{
+      grid-column: span 12; background:linear-gradient(180deg,#0f1620,#0d141c);
+      border:1px solid var(--line); border-radius: var(--radius); padding:16px; box-shadow:var(--shadow);
+    }
+    @media (min-width: 900px){
+      .panel.half{ grid-column: span 6; }
+    }
+    .panel h2{font-size:16px; margin:0 0 10px 0}
+    .hint{color:var(--muted); font-size:12px; margin-bottom:10px}
+    .row{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
+    .row .field{flex:1; min-width:160px}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    input,select,textarea{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #253243; background: #0e1520; color:var(--fg);
+      outline:none; transition:.2s border,.2s background;
+      font-size:14px;
+    }
+    textarea{ min-height:92px; resize:vertical; }
+    input::placeholder, textarea::placeholder{ color:#5c738b }
+    table{ width:100%; border-collapse:collapse; margin-top:10px; border-radius:10px; overflow:hidden}
+    th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid #1f2a37; }
+    th{ font-size:12px; color:#8fa6bd; background:#101824; position:sticky; top:0; }
+    tr:hover td{ background:#0f1824 }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700;
+      border:1px solid #233041; background:#0e1722; color:#a9c2d8;
+    }
+    .chip.ok{ color:#b9f6d4; border-color:#1f3a33; background: rgba(34,197,94,.08)}
+    .chip.warn{ color:#ffe6b3; border-color:#3a2f1f; background: rgba(245,158,11,.08)}
+    .chip.bad{ color:#ffc5c5; border-color:#3a1f22; background: rgba(239,68,68,.08)}
+    .kbd{font-family:var(--mono); font-size:11px; color:#b7c9db; background:#0c131b; padding:2px 6px; border-radius:6px; border:1px solid #213043}
+    .footer-note{color:#7f9ab5; font-size:12px; margin-top:14px}
+    .right{ text-align:right }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>QuantumExec Scheduler</h1>
+          <div class="subtitle">Phase 1 — clean data model, live workload, rule‑based optimizer</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="seedBtn" title="Load sample demo data">Load Demo Data</button>
+        <button class="btn danger" id="resetBtn" title="Clear everything">Reset</button>
+        <button class="btn primary" id="optBtnTop">Optimize Schedule</button>
+      </div>
+    </header>
 
-<h1>Scheduling MVP - Phase 1</h1>
+    <nav class="tabs" role="tablist" aria-label="Primary">
+      <div class="tab active" data-tab="tasks" role="tab" aria-selected="true">Tasks</div>
+      <div class="tab" data-tab="resources" role="tab" aria-selected="false">Resources</div>
+      <div class="tab" data-tab="constraints" role="tab" aria-selected="false">Constraints</div>
+      <div class="tab" data-tab="output" role="tab" aria-selected="false">Output</div>
+    </nav>
 
-<h2>Resources</h2>
-<div>
-  <input id="resName" placeholder="Name">
-  <input id="resSkills" placeholder="Skills (comma separated)">
-  <input id="resMax" type="number" placeholder="Max Tasks">
-  <button onclick="addResource()">Add Resource</button>
-</div>
-<table id="resourcesTable">
-  <thead>
-    <tr><th>Name</th><th>Skills</th><th>Max Tasks</th><th>Current Load</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+    <!-- TASKS -->
+    <section id="view-tasks" class="grid">
+      <div class="panel half">
+        <h2>New Task</h2>
+        <div class="hint">Keep it simple. Required Skills should be comma‑separated (e.g., design, figma).</div>
+        <div class="row">
+          <div class="field"><label>Title</label><input id="tTitle" placeholder="Design marketing brochure" /></div>
+          <div class="field">
+            <label>Priority</label>
+            <select id="tPriority">
+              <option>High</option><option>Medium</option><option>Low</option>
+            </select>
+          </div>
+          <div class="field"><label>Required Skills</label><input id="tSkills" placeholder="design, figma, print" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Est. Hours</label><input id="tHours" type="number" step="0.25" placeholder="4" /></div>
+          <div class="field"><label>Due Date</label><input id="tDue" type="date" /></div>
+          <div class="field"><label>Assignee (optional)</label><input id="tAssignee" placeholder="Sarah Kim" /></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="addTaskBtn">Add Task</button>
+        </div>
+      </div>
 
-<h2>Tasks</h2>
-<div>
-  <input id="taskTitle" placeholder="Title">
-  <select id="taskPriority">
-    <option>High</option>
-    <option>Medium</option>
-    <option>Low</option>
-  </select>
-  <input id="taskSkills" placeholder="Required Skills (comma separated)">
-  <input id="taskHours" type="number" placeholder="Est. Hours">
-  <input id="taskDue" type="date">
-  <button onclick="addTask()">Add Task</button>
-</div>
-<table id="tasksTable">
-  <thead>
-    <tr><th>Title</th><th>Priority</th><th>Skills</th><th>Hours</th><th>Due</th><th>Assignee</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+      <div class="panel half">
+        <h2>Tasks</h2>
+        <div class="hint">Sorted in Output by Priority, Due, then Hours. Use Optimize to assign fairly.</div>
+        <table id="tasksTable" aria-label="Tasks table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Priority</th><th>Skills</th><th>Hours</th><th>Due</th><th>Assignee</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer-note">Tip: use <span class="kbd">Load Demo Data</span> above to see a working example.</div>
+      </div>
+    </section>
 
-<h2>Actions</h2>
-<button onclick="optimizeSchedule()">Optimize Schedule</button>
+    <!-- RESOURCES -->
+    <section id="view-resources" class="grid" hidden>
+      <div class="panel half">
+        <h2>New Resource</h2>
+        <div class="hint">Add people and what they can do. Max Tasks caps daily workload.</div>
+        <div class="row">
+          <div class="field"><label>Name</label><input id="rName" placeholder="Sarah Kim" /></div>
+          <div class="field"><label>Skills</label><input id="rSkills" placeholder="design, figma, print" /></div>
+          <div class="field"><label>Max Tasks</label><input id="rMax" type="number" placeholder="3" /></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="addResourceBtn">Add Resource</button>
+        </div>
+      </div>
 
-<script>
-let resources = [];
-let tasks = [];
+      <div class="panel half">
+        <h2>Resources</h2>
+        <div class="hint">Live workload updates after Optimize. Red chip = overloaded.</div>
+        <table id="resourcesTable" aria-label="Resources table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Skills</th><th>Max Tasks</th><th>Current Load</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
-function addResource() {
-  const name = document.getElementById('resName').value.trim();
-  const skills = document.getElementById('resSkills').value.trim().toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
-  const maxTasks = parseInt(document.getElementById('resMax').value, 10) || 0;
-  if (!name) return;
-  resources.push({ name, skills, maxTasks });
-  document.getElementById('resName').value = '';
-  document.getElementById('resSkills').value = '';
-  document.getElementById('resMax').value = '';
-  renderResources();
-}
+    <!-- CONSTRAINTS -->
+    <section id="view-constraints" class="grid" hidden>
+      <div class="panel">
+        <h2>Constraints</h2>
+        <div class="hint">Phase 1 keeps constraints simple. You can capture guidance here for the demo.</div>
+        <div class="row">
+          <div class="field"><label>Guideline</label><input id="cText" placeholder="Max 2 client calls per day" /></div>
+          <div class="field right"><label>&nbsp;</label><button class="btn" id="addConstraintBtn">Add</button></div>
+        </div>
+        <table id="constraintsTable" aria-label="Constraints table">
+          <thead>
+            <tr><th>Constraint</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer-note">Examples: “Design tasks require Designer availability ≥ 50%”, “No Friday deployments.”</div>
+      </div>
+    </section>
 
-function addTask() {
-  const title = document.getElementById('taskTitle').value.trim();
-  const priority = document.getElementById('taskPriority').value;
-  const skills = document.getElementById('taskSkills').value.trim().toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
-  const hours = parseFloat(document.getElementById('taskHours').value) || 0;
-  const due = document.getElementById('taskDue').value;
-  if (!title) return;
-  tasks.push({ title, priority, skills, hours, due, assignee: '' });
-  document.getElementById('taskTitle').value = '';
-  document.getElementById('taskSkills').value = '';
-  document.getElementById('taskHours').value = '';
-  document.getElementById('taskDue').value = '';
-  renderTasks();
-}
+    <!-- OUTPUT -->
+    <section id="view-output" class="grid" hidden>
+      <div class="panel">
+        <h2>Output — Optimized Schedule</h2>
+        <div class="row">
+          <button class="btn primary" id="optBtn">Run Optimize</button>
+          <div class="hint">Rule‑based logic: valid skills → not overloaded → lowest current load → keep valid current assignee.</div>
+        </div>
+        <table id="outputTable" aria-label="Optimized output">
+          <thead>
+            <tr><th>Date</th><th>Resource</th><th>Task</th><th>Priority</th><th>Hours</th><th>Status</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer-note">Phase 1: deterministic, no external services. Phase 2 can add AI suggestions and time windows.</div>
+      </div>
+    </section>
+  </div>
 
-function renderResources() {
-  const tbody = document.querySelector('#resourcesTable tbody');
-  tbody.innerHTML = '';
-  resources.forEach(res => {
-    const load = tasks.filter(t => t.assignee === res.name).length;
-    const tr = document.createElement('tr');
-    if (load > res.maxTasks) tr.classList.add('overloaded');
-    tr.innerHTML = `<td>${res.name}</td><td>${res.skills.join(', ')}</td><td>${res.maxTasks}</td><td>${load}</td>`;
-    tbody.appendChild(tr);
-  });
-}
+  <script>
+    // ---------- Storage & State ----------
+    const KEYS = {
+      tasks: 'qx_tasks_v1',
+      resources: 'qx_resources_v1',
+      constraints: 'qx_constraints_v1'
+    };
+    const priorityRank = { High:3, Medium:2, Low:1 };
 
-function renderTasks() {
-  const tbody = document.querySelector('#tasksTable tbody');
-  tbody.innerHTML = '';
-  tasks.forEach(t => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${t.title}</td><td>${t.priority}</td><td>${t.skills.join(', ')}</td><td>${t.hours}</td><td>${t.due}</td><td>${t.assignee}</td>`;
-    tbody.appendChild(tr);
-  });
-  renderResources();
-}
+    let tasks = load(KEYS.tasks) ?? [];
+    let resources = load(KEYS.resources) ?? [];
+    let constraints = load(KEYS.constraints) ?? [];
 
-function optimizeSchedule() {
-  // Reset assignments
-  tasks.forEach(t => t.assignee = '');
-  // Sort tasks by priority, due date, hours
-  const priorityRank = { High: 3, Medium: 2, Low: 1 };
-  tasks.sort((a, b) => {
-    if (priorityRank[b.priority] !== priorityRank[a.priority]) return priorityRank[b.priority] - priorityRank[a.priority];
-    if (a.due !== b.due) return new Date(a.due) - new Date(b.due);
-    return a.hours - b.hours;
-  });
-  // Assign tasks
-  tasks.forEach(task => {
-    const eligible = resources
-      .map(r => ({...r, load: tasks.filter(t => t.assignee === r.name).length }))
-      .filter(r => task.skills.every(s => r.skills.includes(s)) && r.load < r.maxTasks)
-      .sort((r1, r2) => r1.load - r2.load);
-    if (eligible.length > 0) {
-      task.assignee = eligible[0].name;
-    } else {
-      task.assignee = 'Unassigned';
+    function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+    function load(key){ try{ return JSON.parse(localStorage.getItem(key)); }catch{ return null; } }
+
+    // ---------- Utilities ----------
+    const normSkills = (sArr) => (sArr||[]).map(s=>String(s).toLowerCase().trim()).filter(Boolean);
+    const hasAllSkills = (resource, required) => {
+      const rs = new Set(normSkills(resource.skills));
+      return normSkills(required).every(s => rs.has(s));
+    };
+    const formatDate = (d) => d ? new Date(d).toLocaleDateString() : '';
+    const clone = (x) => JSON.parse(JSON.stringify(x));
+
+    function currentLoad(resourceName){
+      return tasks.filter(t => t.assignee === resourceName).length;
     }
-  });
-  renderTasks();
-}
-</script>
+    function statusChip(load, max){
+      if (max === 0) return '<span class="chip warn">No capacity</span>';
+      if (load > max) return '<span class="chip bad">Overloaded</span>';
+      if (load === max) return '<span class="chip warn">At capacity</span>';
+      return '<span class="chip ok">OK</span>';
+    }
 
+    // ---------- Rendering ----------
+    function renderTasks(){
+      const tb = document.querySelector('#tasksTable tbody');
+      tb.innerHTML = '';
+      tasks.forEach((t, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(t.title)}</td>
+          <td>${escapeHtml(t.priority)}</td>
+          <td>${escapeHtml((t.skills||[]).join(', '))}</td>
+          <td>${t.hours ?? ''}</td>
+          <td>${formatDate(t.due)}</td>
+          <td>${escapeHtml(t.assignee||'')}</td>
+          <td class="right">
+            <button class="btn ghost" title="Unassign" onclick="unassignTask(${idx})">Unassign</button>
+            <button class="btn" title="Delete" onclick="deleteTask(${idx})">Delete</button>
+          </td>`;
+        tb.appendChild(tr);
+      });
+    }
+    function renderResources(){
+      const tb = document.querySelector('#resourcesTable tbody');
+      tb.innerHTML = '';
+      resources.forEach((r, idx) => {
+        const load = currentLoad(r.name);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.name)}</td>
+          <td>${escapeHtml((r.skills||[]).join(', '))}</td>
+          <td>${r.maxTasks ?? 0}</td>
+          <td>${load}</td>
+          <td>${statusChip(load, r.maxTasks ?? 0)}</td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+    function renderConstraints(){
+      const tb = document.querySelector('#constraintsTable tbody');
+      tb.innerHTML = '';
+      constraints.forEach((c, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(c.text)}</td>
+                        <td class="right"><button class="btn" onclick="deleteConstraint(${idx})">Delete</button></td>`;
+        tb.appendChild(tr);
+      });
+    }
+    function renderOutput(){
+      const tb = document.querySelector('#outputTable tbody');
+      tb.innerHTML = '';
+      // Present tasks grouped by date after last optimize run (uses current tasks state)
+      const copy = clone(tasks);
+      // Order for viewing
+      copy.sort((a,b)=>{
+        const pr = priorityRank[b.priority] - priorityRank[a.priority];
+        if (pr !== 0) return pr;
+        const ad = (a.due? new Date(a.due).getTime(): Infinity);
+        const bd = (b.due? new Date(b.due).getTime(): Infinity);
+        if (ad !== bd) return ad - bd;
+        return (a.hours||0) - (b.hours||0);
+      });
+      copy.forEach(t=>{
+        const row = document.createElement('tr');
+        const status = t.assignee && t.assignee!=="Unassigned" ? '<span class="chip ok">Assigned</span>' : '<span class="chip warn">Unassigned</span>';
+        row.innerHTML = `
+          <td>${formatDate(t.due)}</td>
+          <td>${escapeHtml(t.assignee||'')}</td>
+          <td>${escapeHtml(t.title)}</td>
+          <td>${escapeHtml(t.priority)}</td>
+          <td>${t.hours ?? ''}</td>
+          <td>${status}</td>
+        `;
+        tb.appendChild(row);
+      });
+    }
+    function renderAll(){
+      renderTasks(); renderResources(); renderConstraints(); renderOutput();
+    }
+
+    // ---------- Actions ----------
+    function addTask(){
+      const title = byId('tTitle').value.trim();
+      if(!title) return;
+      const t = {
+        title,
+        priority: byId('tPriority').value,
+        skills: normSkills(byId('tSkills').value.split(',')),
+        hours: parseFloat(byId('tHours').value || '0'),
+        due: byId('tDue').value || '',
+        assignee: byId('tAssignee').value.trim() || ''
+      };
+      tasks.push(t); save(KEYS.tasks, tasks); clearTaskForm(); renderAll();
+    }
+    function deleteTask(idx){
+      tasks.splice(idx,1); save(KEYS.tasks, tasks); renderAll();
+    }
+    function unassignTask(idx){
+      tasks[idx].assignee = ''; save(KEYS.tasks, tasks); renderAll();
+    }
+    function addResource(){
+      const name = byId('rName').value.trim();
+      if(!name) return;
+      const r = {
+        name,
+        skills: normSkills(byId('rSkills').value.split(',')),
+        maxTasks: parseInt(byId('rMax').value || '0',10)
+      };
+      resources.push(r); save(KEYS.resources, resources); clearResourceForm(); renderAll();
+    }
+    function addConstraint(){
+      const text = byId('cText').value.trim();
+      if(!text) return;
+      constraints.push({text}); save(KEYS.constraints,constraints); byId('cText').value=''; renderAll();
+    }
+    function deleteConstraint(idx){
+      constraints.splice(idx,1); save(KEYS.constraints,constraints); renderAll();
+    }
+
+    function optimize(){
+      // Keep valid current assignees; otherwise reassign
+      // Prepare quick lookup for loads that update as we assign
+      const loadMap = Object.fromEntries(resources.map(r => [r.name, 0]));
+      tasks.forEach(t => { if (t.assignee && loadMap[t.assignee] !== undefined) loadMap[t.assignee] += 1; });
+
+      // Sort tasks for assignment order
+      const order = tasks.map((t,i)=>({t, i}));
+      order.sort((a,b)=>{
+        const pr = priorityRank[b.t.priority] - priorityRank[a.t.priority];
+        if (pr !== 0) return pr;
+        const ad = (a.t.due? new Date(a.t.due).getTime(): Infinity);
+        const bd = (b.t.due? new Date(b.t.due).getTime(): Infinity);
+        if (ad !== bd) return ad - bd;
+        return (a.t.hours||0) - (b.t.hours||0);
+      });
+
+      const resIndex = Object.fromEntries(resources.map((r,i)=>[r.name, i]));
+
+      order.forEach(({t})=>{
+        // If current assignee is valid and not overloaded, keep it
+        if (t.assignee && resIndex[t.assignee] !== undefined){
+          const r = resources[resIndex[t.assignee]];
+          const withinCap = (loadMap[r.name] < (r.maxTasks ?? 0));
+          if (hasAllSkills(r, t.skills) && withinCap){
+            loadMap[r.name] += 1;
+            return; // keep assignment
+          }
+        }
+        // Otherwise find best eligible by load
+        const eligible = resources
+          .map(r => ({ r, load: loadMap[r.name] ?? 0 }))
+          .filter(x => hasAllSkills(x.r, t.skills) && x.load < (x.r.maxTasks ?? 0))
+          .sort((a,b)=> a.load - b.load);
+
+        if (eligible.length){
+          t.assignee = eligible[0].r.name;
+          loadMap[t.assignee] = (loadMap[t.assignee] ?? 0) + 1;
+        } else {
+          t.assignee = 'Unassigned';
+        }
+      });
+
+      save(KEYS.tasks, tasks);
+      renderAll();
+    }
+
+    // ---------- Helpers ----------
+    function byId(id){ return document.getElementById(id); }
+    function clearTaskForm(){ ['tTitle','tSkills','tHours','tDue','tAssignee'].forEach(id=>byId(id).value=''); byId('tPriority').value='High'; }
+    function clearResourceForm(){ ['rName','rSkills','rMax'].forEach(id=>byId(id).value=''); }
+    function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function seedDemo(){
+      tasks = [
+        { title:'Design Marketing Brochure', priority:'High', skills:normSkills(['design','figma','print']), hours:6, due: datePlus(2), assignee:'' },
+        { title:'Client Onboarding Call', priority:'High', skills:normSkills(['client','call','onboarding']), hours:1, due: datePlus(3), assignee:'' },
+        { title:'Website Banner Update', priority:'Medium', skills:normSkills(['design','web']), hours:3, due: datePlus(5), assignee:'' },
+        { title:'Quarterly Report Draft', priority:'Low', skills:normSkills(['excel','analysis']), hours:4, due: datePlus(7), assignee:'' }
+      ];
+      resources = [
+        { name:'Sarah Kim', skills:normSkills(['design','figma','print','web']), maxTasks:3 },
+        { name:'James Lee', skills:normSkills(['client','call','onboarding','sales']), maxTasks:4 },
+        { name:'Alex Chen', skills:normSkills(['excel','analysis','sql']), maxTasks:2 }
+      ];
+      constraints = [
+        { text:'Max 2 client calls per day' },
+        { text:'Design tasks require Designer availability ≥ 50%' }
+      ];
+      save(KEYS.tasks, tasks);
+      save(KEYS.resources, resources);
+      save(KEYS.constraints, constraints);
+      renderAll();
+    }
+    function datePlus(days){
+      const d = new Date(); d.setDate(d.getDate()+days);
+      const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${dd}`;
+    }
+    function resetAll(){
+      localStorage.removeItem(KEYS.tasks);
+      localStorage.removeItem(KEYS.resources);
+      localStorage.removeItem(KEYS.constraints);
+      tasks=[]; resources=[]; constraints=[];
+      renderAll();
+    }
+
+    // ---------- Tabs ----------
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-tab');
+        document.querySelectorAll('section[id^="view-"]').forEach(sec => sec.hidden = true);
+        byId('view-'+target).hidden = false;
+      });
+    });
+
+    // ---------- Bind UI ----------
+    byId('addTaskBtn').addEventListener('click', addTask);
+    byId('addResourceBtn').addEventListener('click', addResource);
+    byId('addConstraintBtn').addEventListener('click', addConstraint);
+    byId('optBtn').addEventListener('click', optimize);
+    byId('optBtnTop').addEventListener('click', optimize);
+    byId('seedBtn').addEventListener('click', seedDemo);
+    byId('resetBtn').addEventListener('click', resetAll);
+
+    // ---------- Init ----------
+    renderAll();
+  </script>
 </body>
 </html>
