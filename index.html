@@ -1,597 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Unified Planner — HR + Supply Chain</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  :root{
-    --bg:#0b1220;--card:#0d1526;--muted:#1f2937;--text:#e6edf3;--sub:#9aa4b2;
-    --good:#16a34a;--warn:#d97706;--bad:#dc2626;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;padding:24px;background:var(--bg);color:var(--text);font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif}
-  h1{font-size:20px;margin:0 0 12px}
-  h2,h3{margin:0 0 8px}
-  .grid{display:grid;gap:16px}
-  .card{background:var(--card);border:1px solid var(--muted);border-radius:12px;padding:16px}
-  label{display:block;margin:8px 0 4px;color:var(--sub)}
-  textarea,input,select,button{width:100%;background:#0b1324;color:var(--text);border:1px solid var(--muted);border-radius:8px;padding:8px;font-size:13px}
-  textarea{min-height:120px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-  button{cursor:pointer}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  #map{height:420px;border-radius:8px;overflow:hidden}
-  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--muted);margin-left:8px}
-  .good{color:var(--good);background:#0b1f12;border-color:#134e29}
-  .warn{color:var(--warn);background:#1b140b;border-color:#57360b}
-  .bad{color:var(--bad);background:#1a0c0c;border-color:#541414}
-  table{width:100%;border-collapse:separate;border-spacing:0 6px}
-  th,td{padding:8px 10px;text-align:left;background:#0a1020;border-top:1px solid #0f1730;border-bottom:1px solid #0f1730}
-  th{position:sticky;top:0;background:#0c1730;font-weight:600}
-  tr{border-radius:8px}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-  .small{font-size:12px;color:var(--sub)}
-  .muted{color:var(--sub)}
-  .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .route0{background:#60a5fa}.route1{background:#34d399}.route2{background:#f472b6}.route3{background:#fbbf24}.route4{background:#a78bfa}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExecScenario</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Unified Planner — HR Scheduling + Supply Chain Routing</h1>
+  <header>
+    <div class="logo">✔ ExecScenario</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Analytics</a>
+      <a href="#">Templates</a>
+    </nav>
+  </header>
 
-  <div class="card">
-    <label for="mode">Mode</label>
-    <select id="mode">
-      <option value="HR">Human Resources</option>
-      <option value="SC">Supply Chain</option>
-    </select>
-  </div>
+  <main>
+    <h1>Strategic Decision Intelligence</h1>
+    <p class="subheading">
+      Transform complex business scenarios into clear, actionable insights instantly.
+    </p>
 
-  <div id="hrPanel" class="grid">
-    <div class="card">
-      <h2>HR Inputs</h2>
-      <label>Shifts CSV</label>
-      <textarea id="hrShifts" placeholder="ShiftID,Role,Skills,Location,Date,Start,End,RequiredCount,Priority,BreakMin"></textarea>
-      <label>Employees CSV</label>
-      <textarea id="hrEmployees" placeholder="EmpID,Name,Role,Skills,AvailStart,AvailEnd,MaxHours"></textarea>
-      <div class="row">
-        <div>
-          <label>Default break minutes per shift</label>
-          <input id="hrBreak" type="number" value="0" />
+    <div class="container">
+      <!-- Scenario Input -->
+      <section class="input-panel">
+        <h2>Business Scenario</h2>
+        <select id="templateSelect">
+          <option value="">Choose a template...</option>
+          <option value="marketing">Marketing Budget Optimization</option>
+          <option value="inventory">Inventory Reallocation</option>
+          <option value="staffing">Staffing Efficiency</option>
+        </select>
+
+        <textarea id="scenarioInput" placeholder="Describe your business case, market condition, or decision..."></textarea>
+
+        <details class="tips">
+          <summary>Tips for better guidance</summary>
+          <ul>
+            <li>Include KPIs, goals, constraints, and context.</li>
+            <li>Specify company and industry.</li>
+            <li>State the decision clearly.</li>
+          </ul>
+        </details>
+
+        <button class="run-btn">Run Analysis</button>
+      </section>
+
+      <!-- Results Panel -->
+      <section class="results-panel">
+        <h2>Analysis Results</h2>
+        <div class="kpi-preview">
+          <div class="kpi-card">
+            <span class="icon">📈</span>
+            <div><strong>Revenue Impact:</strong> <span id="revImpact">+18.5%</span></div>
+          </div>
+          <div class="kpi-card">
+            <span class="icon">💰</span>
+            <div><strong>Cost Savings:</strong> <span id="costSavings">$2.4M</span></div>
+          </div>
+          <div class="kpi-card">
+            <span class="icon">✅</span>
+            <div><strong>Success Probability:</strong> <span id="successProb">92%</span></div>
+          </div>
         </div>
-        <div>
-          <label>Overtime multiplier</label>
-          <input id="hrOTRate" type="number" value="1.5" step="0.1" />
+
+        <div class="confidence-bar">
+          <div class="bar-fill" style="width: 92%"></div>
         </div>
+        <small class="confidence-label">Confidence Level: High</small>
+
+        <div class="insights">
+          <h3>Strategic Insights</h3>
+          <ul id="insightList">
+            <li>Expected quarterly revenue increase of 18.5%</li>
+            <li>High confidence based on historical benchmarks</li>
+            <li>92% success rate from similar past scenarios</li>
+          </ul>
+        </div>
+
+        <div class="footer-note">Powered by Quantum-Inspired Quick Mode</div>
+        <button class="save-btn">Save Results</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-left">
+      <span>✔ ExecScenario</span>
+      <p>Professional scenario analytics for strategic decision-making</p>
+    </div>
+    <div class="footer-right">
+      <div>
+        <strong>Product</strong>
+        <a href="#">Analytics</a>
+        <a href="#">Templates</a>
       </div>
-      <div class="row">
-        <button id="loadHRDemo">Load HR Demo</button>
-        <button id="runHR">Run HR Scheduler</button>
-      </div>
-      <p class="small muted">Skills field supports semicolons; time format HH:MM in 24h.</p>
-    </div>
-
-    <div class="card" id="hrOutput">
-      <h2>HR Schedule</h2>
-      <div id="hrSummary" class="small muted"></div>
-      <div id="hrTableWrap" style="overflow:auto;max-height:420px;margin-top:8px;"></div>
-    </div>
-  </div>
-
-  <div id="scPanel" class="grid" style="display:none">
-    <div class="card">
-      <h2>Supply Chain Inputs</h2>
-      <label>Depots CSV</label>
-      <textarea id="depots" placeholder="DepotCode,DepotName,Lat,Lng"></textarea>
-      <label>Fleet CSV</label>
-      <textarea id="fleet" placeholder="VehicleID,DepotCode,VehicleType,CapVolume,CapWeight,DriverHours"></textarea>
-      <label>Orders CSV</label>
-      <textarea id="orders" placeholder="OrderID,DestName,Address,Lat,Lng,Volume,Weight,Priority,DueStart,DueEnd,VehicleType"></textarea>
-      <div class="flex">
-        <label class="flex small"><input type="checkbox" id="useGeocode" /> Enable geocoding if Lat/Lng missing</label>
-        <span class="small muted">Uses OpenStreetMap Nominatim; rate limited.</span>
-      </div>
-      <div class="row">
-        <button id="loadSCDemo">Load SC Demo</button>
-        <button id="runSC">Run SC Optimizer</button>
+      <div>
+        <strong>Company</strong>
+        <a href="#">About</a>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
       </div>
     </div>
-
-    <div class="card">
-      <h2>Map</h2>
-      <div id="map"></div>
-      <div class="flex legend small" id="legend"></div>
+    <div class="copyright">
+      © 2025 ExecScenario. All rights reserved.
     </div>
+  </footer>
 
-    <div class="card" id="scOutput">
-      <h2>Routes</h2>
-      <div id="scSummary" class="small muted"></div>
-      <div id="scTableWrap" style="overflow:auto;max-height:420px;margin-top:8px;"></div>
-    </div>
-  </div>
+  <script>
+    const templateSelect = document.getElementById('templateSelect');
+    const scenarioInput = document.getElementById('scenarioInput');
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-/* ========== Mode Toggle ========== */
-const modeSel = document.getElementById('mode');
-const hrPanel = document.getElementById('hrPanel');
-const scPanel = document.getElementById('scPanel');
-modeSel.addEventListener('change', () => {
-  const m = modeSel.value;
-  hrPanel.style.display = m==='HR' ? '' : 'none';
-  scPanel.style.display = m==='SC' ? '' : 'none';
-  ensureMapVisibility(m==='SC');
-});
-
-/* ========== Utilities ========== */
-// Robust-ish CSV parser (handles quoted fields and commas within quotes)
-function parseCSV(text){
-  text = (text || '').trim();
-  if(!text) return [];
-  const lines = [];
-  let row = [], field = '', inQuotes = false;
-  for(let i=0;i<text.length;i++){
-    const c = text[i], n = text[i+1];
-    if(c === '"' ){
-      if(inQuotes && n === '"'){ field+='"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if(c === ',' && !inQuotes){
-      row.push(field); field = '';
-    } else if((c === '\n' || c === '\r') && !inQuotes){
-      if(c === '\r' && n === '\n'){ i++; }
-      row.push(field); field = '';
-      lines.push(row); row = [];
-    } else {
-      field += c;
-    }
-  }
-  row.push(field); lines.push(row);
-  const header = lines.shift().map(h=>h.trim());
-  return lines.filter(r=>r.some(v=>v && v.trim()!=='')).map(cols=>{
-    const obj = {};
-    header.forEach((h,idx)=> obj[h] = (cols[idx] ?? '').trim());
-    return obj;
-  });
-}
-function timeToMin(t){
-  if(!t) return 0;
-  const [h,m] = t.split(':').map(Number);
-  return (h||0)*60 + (m||0);
-}
-function minsToHM(mins){
-  const h = Math.floor(mins/60), m = Math.round(mins%60);
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
-function haversine(a,b){
-  const toRad = d=>d*Math.PI/180;
-  const R=6371; // km
-  const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
-  const s1 = Math.sin(dLat/2), s2 = Math.sin(dLng/2);
-  const q = s1*s1 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*s2*s2;
-  return 2*R*Math.asin(Math.sqrt(q));
-}
-
-/* ========== HR Scheduler ========== */
-const hrShiftsEl = document.getElementById('hrShifts');
-const hrEmpsEl = document.getElementById('hrEmployees');
-const hrBreakEl = document.getElementById('hrBreak');
-const hrOTRateEl = document.getElementById('hrOTRate');
-const hrSummaryEl = document.getElementById('hrSummary');
-const hrTableWrap = document.getElementById('hrTableWrap');
-
-document.getElementById('loadHRDemo').onclick = () => {
-  hrShiftsEl.value = `ShiftID,Role,Skills,Location,Date,Start,End,RequiredCount,Priority,BreakMin
-S1,Barista,Espresso;POS,Cary,2025-08-28,08:00,12:00,2,High,15
-S2,Cashier,POS,Cary,2025-08-28,12:00,16:00,1,Medium,0
-S3,Barista,Espresso;Milk,Cary,2025-08-28,13:00,17:00,1,Medium,15
-S4,Manager,People;POS,Cary,2025-08-28,09:00,17:00,1,High,30
-S5,Cashier,POS,Cary,2025-08-29,09:00,13:00,1,Medium,0`;
-  hrEmpsEl.value = `EmpID,Name,Role,Skills,AvailStart,AvailEnd,MaxHours
-E1,Alex,Barista,Espresso;POS,08:00,17:00,8
-E2,Jamie,Cashier,POS,08:00,16:00,6
-E3,Riley,Manager,People;POS,09:00,18:00,8
-E4,Sam,Barista,Espresso;Milk,12:00,20:00,6
-E5,Taylor,Cashier;Barista,POS;Espresso,08:00,18:00,8`;
-  hrBreakEl.value = 0;
-  hrOTRateEl.value = 1.5;
-};
-
-document.getElementById('runHR').onclick = () => {
-  const shiftsRaw = parseCSV(hrShiftsEl.value);
-  const empsRaw = parseCSV(hrEmpsEl.value);
-  const defaultBreak = parseFloat(hrBreakEl.value||0);
-  const otMult = parseFloat(hrOTRateEl.value||1.5);
-
-  // Normalize and precompute
-  const shifts = shiftsRaw.map(s=>{
-    const br = Number(s.BreakMin||defaultBreak)||0;
-    const durMin = Math.max(0, timeToMin(s.End)-timeToMin(s.Start)-br);
-    const skills = (s.Skills||'').split(/;|\s*,\s*/).filter(Boolean).map(x=>x.trim().toLowerCase());
-    return {...s, BreakMin:br, durMin, skills, req: Math.max(1, parseInt(s.RequiredCount||'1'))};
-  });
-  const emps = empsRaw.map(e=>{
-    const skills = (e.Skills||'').split(/;|\s*,\s*/).filter(Boolean).map(x=>x.trim().toLowerCase());
-    return {
-      ...e,
-      skills,
-      availStart: timeToMin(e.AvailStart||'00:00'),
-      availEnd: timeToMin(e.AvailEnd||'23:59'),
-      maxMin: Math.max(0, parseFloat(e.MaxHours||0)*60),
-      assignedMin: 0
+    const templates = {
+      marketing: "Optimize our $50K monthly marketing budget across paid ads, email, and influencer channels to maximize ROI.",
+      inventory: "Reallocate excess inventory from low-performing regions to high-demand zones while minimizing logistics costs.",
+      staffing: "Restructure staffing schedules to reduce overtime costs and improve coverage during peak hours."
     };
-  });
 
-  // Greedy assignment per date by priority (High->Low), then earliest start
-  const prioRank = v => ({high:0,medium:1,low:2}[String(v||'').toLowerCase()] ?? 1);
-  const byDate = {};
-  shifts.forEach(s=>{ (byDate[s.Date] ||= []).push(s); });
-
-  const assignments = []; // {ShiftID, EmpID, Name, Role, Start, End, durMin, overtime, note}
-  const shortfalls = []; // {ShiftID, missing}
-
-  Object.keys(byDate).sort().forEach(date=>{
-    const dayShifts = byDate[date].sort((a,b)=>{
-      const p = prioRank(a.Priority) - prioRank(b.Priority);
-      if(p!==0) return p;
-      return timeToMin(a.Start) - timeToMin(b.Start);
+    templateSelect.addEventListener('change', () => {
+      const selected = templateSelect.value;
+      scenarioInput.value = templates[selected] || "";
     });
 
-    dayShifts.forEach(shift=>{
-      let need = shift.req;
-      // Candidate filter
-      const candidates = emps.filter(e=>{
-        const roleOK = !shift.Role || String(e.Role||'').toLowerCase().includes(String(shift.Role||'').toLowerCase());
-        const skillsOK = shift.skills.every(sk => e.skills.includes(sk));
-        const timeOK = timeToMin(shift.Start) >= e.availStart && timeToMin(shift.End) <= e.availEnd;
-        return roleOK && skillsOK && timeOK;
-      }).sort((a,b)=>{
-        // Prefer: lowest assigned minutes, has exact role word match, more skills
-        const ar = a.assignedMin - b.assignedMin; if(ar!==0) return ar;
-        const roleA = (String(a.Role||'').toLowerCase()===String(shift.Role||'').toLowerCase()) ? -1:0;
-        const roleB = (String(b.Role||'').toLowerCase()===String(shift.Role||'').toLowerCase()) ? -1:0;
-        const r = roleA - roleB; if(r!==0) return r;
-        return b.skills.length - a.skills.length;
-      });
-
-      const taken = new Set();
-      for(const e of candidates){
-        if(need<=0) break;
-        // Prevent overlapping with already assigned shifts for this emp on this date
-        const hasOverlap = assignments.some(a=>
-          a.EmpID===e.EmpID && a.Date===date &&
-          !(timeToMin(shift.End) <= timeToMin(a.Start) || timeToMin(shift.Start) >= timeToMin(a.End))
-        );
-        if(hasOverlap) continue;
-
-        const newTotal = e.assignedMin + shift.durMin;
-        const overtime = e.maxMin>0 ? newTotal > e.maxMin : false;
-
-        assignments.push({
-          Date: date,
-          ShiftID: shift.ShiftID, Role: shift.Role, Location: shift.Location,
-          Start: shift.Start, End: shift.End, durMin: shift.durMin,
-          EmpID: e.EmpID, Name: e.Name, overtime,
-          CostHours: (shift.durMin/60) * (overtime ? otMult : 1)
-        });
-        e.assignedMin += shift.durMin;
-        taken.add(e.EmpID);
-        need--;
-      }
-      if(need>0){
-        shortfalls.push({Date: date, ShiftID: shift.ShiftID, Role: shift.Role, missing: need});
-      }
-    });
-  });
-
-  // Build outputs
-  const totalAssigned = assignments.length;
-  const totalShort = shortfalls.reduce((a,b)=>a+b.missing,0);
-  const otCount = assignments.filter(a=>a.overtime).length;
-
-  hrSummaryEl.textContent = `Assigned: ${totalAssigned} • Unfilled slots: ${totalShort} • Overtime shifts: ${otCount}`;
-
-  // Table: group by Date
-  const dates = [...new Set(assignments.map(a=>a.Date))].sort();
-  let html = '';
-  dates.forEach(date=>{
-    html += `<h3>${date}</h3>`;
-    html += `<table class="mono"><thead><tr>
-      <th>Shift</th><th>Role</th><th>Time</th><th>Dur</th><th>Employee</th><th>Overtime</th><th>Location</th>
-    </tr></thead><tbody>`;
-    assignments.filter(a=>a.Date===date).forEach(a=>{
-      html += `<tr>
-        <td>${a.ShiftID}</td>
-        <td>${a.Role}</td>
-        <td>${a.Start}–${a.End}</td>
-        <td>${(a.durMin/60).toFixed(2)} h</td>
-        <td>${a.Name} <span class="pill ${a.overtime?'warn':''}">${a.EmpID}</span></td>
-        <td>${a.overtime?'<span class="pill warn">OT</span>':''}</td>
-        <td>${a.Location||''}</td>
-      </tr>`;
-    });
-    // Shortfalls for this date
-    const sf = shortfalls.filter(s=>s.Date===date);
-    if(sf.length){
-      sf.forEach(s=>{
-        html += `<tr><td colspan="7" class="small">
-          <span class="pill bad">Unfilled</span>
-          Shift ${s.ShiftID} (${s.Role||'Any'}) missing ${s.missing} assignment(s)
-        </td></tr>`;
-      });
+    // Sticky Save Button on Mobile
+    const saveBtn = document.querySelector('.save-btn');
+    if (window.innerWidth <= 768) {
+      saveBtn.classList.add('sticky-save');
     }
-    html += `</tbody></table>`;
-  });
-  if(!html){ html = `<div class="small muted">No assignments produced — check inputs.</div>`; }
-  hrTableWrap.innerHTML = html;
-};
-
-/* ========== Supply Chain ========== */
-const depotsEl = document.getElementById('depots');
-const fleetEl = document.getElementById('fleet');
-const ordersEl = document.getElementById('orders');
-const useGeocodeEl = document.getElementById('useGeocode');
-const scSummaryEl = document.getElementById('scSummary');
-const scTableWrap = document.getElementById('scTableWrap');
-const legendEl = document.getElementById('legend');
-
-document.getElementById('loadSCDemo').onclick = () => {
-  depotsEl.value = `DepotCode,DepotName,Lat,Lng
-DUR,Durham Warehouse,35.9940,-78.8986`;
-  fleetEl.value = `VehicleID,DepotCode,VehicleType,CapVolume,CapWeight,DriverHours
-TRK1,DUR,Box,15,5000,8
-VAN1,DUR,Van,8,2000,8`;
-  ordersEl.value = `OrderID,DestName,Address,Lat,Lng,Volume,Weight,Priority,DueStart,DueEnd,VehicleType
-O1,Cary Store,,35.7915,-78.7811,2,300,High,09:00,12:00,Van
-O2,Apex Outlet,,35.7327,-78.8503,3,400,Medium,10:00,14:00,Van
-O3,RTP Client,,35.9000,-78.8600,4,600,High,08:00,12:00,Box
-O4,Morrisville Hub,,35.8235,-78.8256,1,150,Low,11:00,16:00,Any
-O5,Garner Shop,,35.7113,-78.6142,2,250,Low,12:00,17:00,Any`;
-  useGeocodeEl.checked = false;
-};
-
-document.getElementById('runSC').onclick = async () => {
-  const depots = parseCSV(depotsEl.value).map(d=>({
-    ...d, Lat:+d.Lat, Lng:+d.Lng
-  })).filter(d=>isFinite(d.Lat)&&isFinite(d.Lng));
-
-  const fleet = parseCSV(fleetEl.value).map(v=>({
-    ...v, CapVolume:+v.CapVolume||0, CapWeight:+v.CapWeight||0, DriverHours:+v.DriverHours||8
-  }));
-
-  let orders = parseCSV(ordersEl.value).map(o=>({
-    ...o,
-    Lat: o.Lat?+o.Lat:null, Lng: o.Lng?+o.Lng:null,
-    Volume:+o.Volume||0, Weight:+o.Weight||0,
-    DueStart: o.DueStart||'', DueEnd:o.DueEnd||'',
-    Priority: o.Priority||'Medium',
-    VehicleType: (o.VehicleType||'Any').toLowerCase()
-  }));
-
-  if(!depots.length || !fleet.length || !orders.length){
-    scSummaryEl.textContent = 'Please provide depots, fleet, and orders.';
-    scTableWrap.innerHTML = '';
-    renderMap(depots, [], []);
-    return;
-  }
-
-  // Optional geocoding for missing coords
-  if(useGeocodeEl.checked){
-    for(const o of orders){
-      if((o.Lat==null || o.Lng==null) && o.Address){
-        const c = await geocode(o.Address);
-        if(c){ o.Lat=c.lat; o.Lng=c.lng; }
-      }
-    }
-  }
-  // Filter orders with valid coordinates
-  orders = orders.filter(o=>isFinite(o.Lat) && isFinite(o.Lng));
-
-  const routes = buildRoutes(depots, fleet, orders);
-  const kmTotal = routes.reduce((a,r)=>a+r.distanceKm,0);
-  const drops = routes.reduce((a,r)=>a+r.stops.length,0);
-
-  scSummaryEl.textContent = `Vehicles used: ${routes.length} • Drops: ${drops} • Distance: ${kmTotal.toFixed(1)} km`;
-
-  // Table
-  let html = '';
-  routes.forEach((r,idx)=>{
-    html += `<h3>Vehicle ${r.vehicle.VehicleID} <span class="pill">Depot ${r.depot.DepotCode}</span></h3>`;
-    html += `<table class="mono"><thead><tr>
-      <th>#</th><th>Order</th><th>Dest</th><th>ETA</th><th>Window</th><th>Load V/W</th>
-    </tr></thead><tbody>`;
-    r.stops.forEach((s,i)=>{
-      html += `<tr>
-        <td>${i+1}</td>
-        <td>${s.OrderID}</td>
-        <td>${s.DestName||''}</td>
-        <td>${s.ETA||''}</td>
-        <td>${s.DueStart||''}–${s.DueEnd||''}</td>
-        <td>${s.Volume}/${s.Weight}</td>
-      </tr>`;
-    });
-    html += `</tbody></table>`;
-  });
-  if(!html){ html = `<div class="small muted">No routes created — check coordinates and capacities.</div>`; }
-  scTableWrap.innerHTML = html;
-
-  // Map
-  renderMap(depots, orders, routes);
-};
-
-/* Simple nearest-neighbor with capacity and vehicle-type filtering */
-function buildRoutes(depots, fleet, orders){
-  const ordersByDepot = {};
-  // Assign each order to nearest depot
-  orders.forEach(o=>{
-    let best = {idx:-1, d:Infinity};
-    depots.forEach((d,i)=>{
-      const dist = haversine({lat:+d.Lat,lng:+d.Lng},{lat:+o.Lat,lng:+o.Lng});
-      if(dist < best.d){ best = {idx:i, d:dist}; }
-    });
-    const key = depots[best.idx].DepotCode;
-    (ordersByDepot[key] ||= []).push(o);
-  });
-
-  const routes = [];
-  Object.entries(ordersByDepot).forEach(([depotCode, ords])=>{
-    const depot = depots.find(d=>d.DepotCode===depotCode);
-    // Vehicles at this depot
-    const vehs = fleet.filter(v=>v.DepotCode===depotCode);
-    const pending = ords.slice();
-
-    vehs.forEach((vehicle, vi)=>{
-      let remainingVol = vehicle.CapVolume;
-      let remainingWgt = vehicle.CapWeight;
-      let remainingTimeMin = (vehicle.DriverHours||8)*60;
-      const curr = {lat:+depot.Lat, lng:+depot.Lng};
-      const eligibleType = (vehicle.VehicleType||'any').toLowerCase();
-
-      const thisRoute = [];
-      let distKm = 0;
-
-      while(pending.length){
-        // Filter feasible by capacity and type
-        const feas = pending.filter(o=>{
-          const typeOK = (o.VehicleType==='any') || (eligibleType==='any') || (o.VehicleType===eligibleType);
-          const capOK = o.Volume<=remainingVol && o.Weight<=remainingWgt;
-          return typeOK && capOK;
-        });
-        if(!feas.length) break;
-
-        // Nearest neighbor from current
-        let best = {i:-1, d:Infinity};
-        feas.forEach((o,idx)=>{
-          const d = haversine(curr,{lat:+o.Lat,lng:+o.Lng});
-          if(d < best.d){ best = {i: pending.indexOf(o), d}; }
-        });
-        if(best.i===-1) break;
-
-        const pick = pending.splice(best.i,1)[0];
-        // Travel time estimate @ 40 km/h
-        const travelMin = (best.d/40)*60;
-        if(travelMin > remainingTimeMin) { // not enough hours
-          // Put back and break
-          pending.push(pick);
-          break;
-        }
-
-        remainingTimeMin -= travelMin;
-        remainingVol -= pick.Volume;
-        remainingWgt -= pick.Weight;
-        distKm += best.d;
-        curr.lat = +pick.Lat; curr.lng = +pick.Lng;
-
-        // Simple ETA accumulation from 08:00 depot start
-        const startMin = 8*60; // 08:00
-        const etaMin = startMin + (thisRoute.etaAccum||0) + travelMin;
-        thisRoute.etaAccum = (thisRoute.etaAccum||0) + travelMin + 10; // +10 min service time
-
-        pick.ETA = minsToHM(Math.round(etaMin));
-        thisRoute.push(pick);
-      }
-
-      if(thisRoute.length){
-        // Return to depot distance
-        const back = haversine(curr,{lat:+depot.Lat,lng:+depot.Lng});
-        distKm += back;
-        routes.push({
-          depot, vehicle, stops: thisRoute, distanceKm: distKm
-        });
-      }
-    });
-  });
-  return routes;
-}
-
-/* ========== Map ========== */
-let map, baseLayer, overlayGroup;
-function ensureMap(){
-  if(map) return map;
-  map = L.map('map');
-  baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'&copy; OpenStreetMap contributors'
-  }).addTo(map);
-  overlayGroup = L.layerGroup().addTo(map);
-  map.setView([35.9,-78.8], 10);
-  return map;
-}
-function ensureMapVisibility(show){
-  ensureMap();
-  document.getElementById('map').style.display = show ? '' : 'none';
-}
-function renderMap(depots=[], orders=[], routes=[]){
-  ensureMap();
-  overlayGroup.clearLayers();
-  const bounds = [];
-
-  // Depots
-  depots.forEach(d=>{
-    const ll = [+d.Lat, +d.Lng];
-    bounds.push(ll);
-    L.marker(ll,{title:d.DepotName}).addTo(overlayGroup)
-      .bindPopup(`<b>${d.DepotName}</b><br/>${d.DepotCode}`);
-  });
-
-  // Orders (unassigned visualization — grey)
-  orders.forEach(o=>{
-    const ll = [+o.Lat, +o.Lng];
-    if(!isFinite(ll[0])||!isFinite(ll[1])) return;
-    bounds.push(ll);
-  });
-
-  // Routes polylines and colored stops
-  const colors = ['#60a5fa','#34d399','#f472b6','#fbbf24','#a78bfa','#fb7185','#22d3ee'];
-  routes.forEach((r,idx)=>{
-    const color = colors[idx % colors.length];
-    const pts = [[+r.depot.Lat, +r.depot.Lng]];
-    r.stops.forEach(s=>{
-      pts.push([+s.Lat,+s.Lng]);
-      const m = L.circleMarker([+s.Lat,+s.Lng],{
-        radius:6, color:'#000', weight:1, fillColor:color, fillOpacity:0.9
-      }).addTo(overlayGroup);
-      m.bindPopup(`<b>${s.OrderID}</b> — ${s.DestName||''}<br/>ETA ${s.ETA||'—'}<br/>Vol ${s.Volume}, Wgt ${s.Weight}`);
-    });
-    pts.push([+r.depot.Lat, +r.depot.Lng]);
-    L.polyline(pts,{color,weight:3,opacity:0.9}).addTo(overlayGroup);
-    bounds.push(...pts);
-  });
-
-  if(bounds.length){
-    map.fitBounds(bounds, {padding:[20,20]});
-  } else {
-    map.setView([35.9,-78.8], 10);
-  }
-
-  // Legend
-  legendEl.innerHTML = '';
-  routes.forEach((r,idx)=>{
-    const color = colors[idx % colors.length];
-    const span = document.createElement('span');
-    span.innerHTML = `<span class="dot" style="background:${color}"></span> ${r.vehicle.VehicleID}`;
-    legendEl.appendChild(span);
-  });
-}
-
-/* ========== Geocoding ========== */
-async function geocode(query){
-  try{
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    const res = await fetch(url, {headers:{'Accept':'application/json'}});
-    if(!res.ok) return null;
-    const data = await res.json();
-    if(data && data[0]) return {lat:+data[0].lat, lng:+data[0].lon};
-    return null;
-  }catch(e){
-    return null;
-  }
-}
-
-/* ========== Init ========== */
-ensureMap(); // initialize map so switching is instant
-</script>
+  </script>
 </body>
 </html>
-```
